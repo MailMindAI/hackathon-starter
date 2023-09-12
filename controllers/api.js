@@ -8,6 +8,7 @@ const paypal = require('paypal-rest-sdk');
 const axios = require('axios');
 const googledrive = require('@googleapis/drive');
 const googlesheets = require('@googleapis/sheets');
+const googlegmail  = require('@googleapis/gmail');
 const validator = require('validator');
 const {
   Configuration: LobConfiguration, LetterEditable, LettersApi, ZipEditable, ZipLookupsApi
@@ -701,6 +702,31 @@ exports.getGoogleMaps = (req, res) => {
   res.render('api/google-maps', {
     title: 'Google Maps API',
     google_map_api_key: process.env.GOOGLE_MAP_API_KEY
+  });
+};
+
+exports.getGoogleGmail = (req, res) => {
+  const token = req.user.tokens.find(token => token.kind === 'google');
+
+  const authObj = new googlegmail.auth.OAuth2();
+  authObj.setCredentials({
+    access_token: token.accessToken
+  });
+
+  const gmail = googlegmail.gmail({
+    version: 'v1',
+    auth: authObj
+  });
+
+  gmail.users.labels.list({
+    userId: 'me'
+  }, (err, response) => {
+    if (err) return console.log(`The API returned an error: ${err}`);
+
+    res.render('api/google-gmail', {
+      title: 'Google Gmail API',
+      labels: response.data.labels
+    });
   });
 };
 
